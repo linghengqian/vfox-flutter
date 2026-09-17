@@ -21,3 +21,5 @@ jobs:
           cache: false
       - name: Test architecture selection with vfox's Lua interpreter
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/hooks_test.lua
+      - name: Test OpenHarmony releases with vfox's Lua interpreter
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/ohos_test.lua

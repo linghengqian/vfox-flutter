@@ -23,6 +23,8 @@ jobs:
       - run: docker build --pull -f tests/e2e/Dockerfile -t vfox-flutter-e2e .
       - run: docker run --rm -e VFOX_VERSION=latest vfox-flutter-e2e
       - run: docker run --rm -e VFOX_VERSION=main vfox-flutter-e2e
+      - run: docker run --rm -e VFOX_VERSION=latest -e FLUTTER_VERSION=3.41.10-ohos-1.0.0 vfox-flutter-e2e
+      - run: docker run --rm -e VFOX_VERSION=main -e FLUTTER_VERSION=3.41.10-ohos-1.0.0 vfox-flutter-e2e
 
   e2e-windows:
     if: github.repository == 'version-fox/vfox-flutter'

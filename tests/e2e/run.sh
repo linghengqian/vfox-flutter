@@ -2,6 +2,7 @@
 set -eu
 
 VFOX_VERSION="${VFOX_VERSION:-latest}"
+FLUTTER_VERSION="${FLUTTER_VERSION:-3.47.4}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORK="$(mktemp -d)"
 
@@ -17,8 +18,8 @@ fi
 echo 'eval "$(vfox activate bash)"' >> ~/.bashrc
 bash -ic "
 vfox add flutter --source '$WORK/flutter.zip' &&
-vfox install flutter@3.47.4 &&
-vfox use --global flutter@3.47.4 &&
+vfox install flutter@$FLUTTER_VERSION &&
+vfox use --global flutter@$FLUTTER_VERSION &&
 source ~/.bashrc &&
 dart --version &&
 flutter --version --no-version-check
