@@ -1,13 +1,9 @@
 # E2E
 
-Offline Lua hook tests (`tests/hooks_test.lua` for the official release index,
-`tests/ohos_test.lua` for the OpenHarmony releases) run via the **Test Plugin**
-workflow. A containerized end-to-end suite exercises the plugin against real vfox
-(`latest` + `main`) on Linux and Windows.
-
-Each `docker run` starts from a clean container, so every SDK is installed
-independently. `FLUTTER_VERSION` selects which release to install; it defaults to
-`3.47.4`.
+Offline Lua hook tests (`tests/hooks_test.lua`) run via the **Test Plugin** workflow.
+A containerized end-to-end suite exercises the plugin against real vfox (`latest` +
+`main`) on Linux and Windows. Each of the four `vfox` x `flavor` combinations runs in
+its own throwaway container, so no state leaks between them.
 
 ## Running on Ubuntu 26.04
 
@@ -18,10 +14,7 @@ Execute in Bash,
 ```bash
 git clone git@github.com:version-fox/vfox-flutter.git
 cd ./vfox-flutter/
-docker build -f tests/e2e/Dockerfile -t vfox-flutter-e2e:linux .
-docker run --rm -e VFOX_VERSION=latest vfox-flutter-e2e:linux
-docker run --rm -e VFOX_VERSION=main vfox-flutter-e2e:linux
-docker run --rm -e FLUTTER_VERSION=3.41.10-ohos-1.0.0 vfox-flutter-e2e:linux
+bash tests/e2e/linux/e2e.sh
 ```
 
 ## Running on Windows 11 Pro
@@ -47,7 +40,5 @@ Invoke-WebRequest -UseBasicParsing `
 ```powershell
 git clone git@github.com:version-fox/vfox-flutter.git
 cd ./vfox-flutter/
-docker build -f tests/e2e/Dockerfile.windows -t vfox-flutter-e2e:windows .
-docker run --rm -e VFOX_VERSION=latest vfox-flutter-e2e:windows
-docker run --rm -e VFOX_VERSION=main vfox-flutter-e2e:windows
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\tests\e2e\windows\e2e.ps1
 ```

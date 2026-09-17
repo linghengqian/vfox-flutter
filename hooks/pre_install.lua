@@ -7,7 +7,7 @@ require("util")
 function PLUGIN:PreInstall(ctx)
     local arg, requestedArch = splitVersionAndArch(ctx.version)
     if ohos.isOhosVersion(arg) then
-        return ohos.archive(arg, requestedArch)
+        return ohos.checkout(arg, requestedArch)
     end
     local platform = getOsTypeAndArch()
     local targetArch = requestedArch or platform.archType
@@ -57,6 +57,6 @@ end
 function PLUGIN:PostInstall(ctx)
     local sdk = ctx.sdkInfo and ctx.sdkInfo[PLUGIN.name]
     if sdk ~= nil and ohos.isOhosVersion(sdk.version) then
-        ohos.bootstrap(sdk.path, sdk.version)
+        ohos.clean(sdk.version)
     end
 end

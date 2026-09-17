@@ -7,8 +7,8 @@ are also available, for example:
 vfox install flutter@3.41.10-ohos-1.0.0
 ```
 
-These are source archives that need `git` and a no-checksum download, so they
-behave differently from official releases.
+These are source checkouts that need `git`, so they behave differently from
+official releases.
 
 ## Install
 
@@ -27,30 +27,32 @@ version.
 
 ## How these builds differ
 
-- **`git` is required.** gitcode.com serves plain source trees without a `.git`
-  directory, and the Flutter tool refuses to run outside a git checkout. After
-  extracting the archive, the plugin initializes a local repository, commits the
-  pinned engine versions, and tags it with the version. Committing the version
-  files is what stops the toolchain from falling back to content-aware hash
-  resolution against git history. No git identity is written to your global
-  config.
+- **`git` is required.** The Flutter tool refuses to run outside a git checkout, so
+  the plugin checks the release's commit out of gitcode.com's
+  `CPF-Flutter/flutter_flutter` repository and installs the result as a real
+  checkout. Keeping the pinned engine versions committed is what stops the
+  toolchain from falling back to content-aware hash resolution against git
+  history. No git identity is written to your global config.
+- **The pinned commit is used, not the branch.** Each release records the commit it
+  was cut from, and that is what gets checked out, so a moving branch cannot change
+  what an installed version contains.
 - **They are source, not prebuilt SDKs.** On first use the Flutter tool builds
   itself and downloads the Dart SDK and engine artifacts from Huawei's OBS, so
   the first `flutter` command needs a network connection and takes longer than
   an official release.
-- **No checksum is verified.** gitcode.com does not publish archive checksums, so
-  vfox skips verification with a warning. This is a third-party fork; review its
-  source before trusting it.
+- **No checksum is verified.** A git checkout has no published checksum, so vfox
+  skips verification with a warning; git's own history is the integrity check.
+  This is a third-party fork; review its source before trusting it.
 - **No architecture variants.** Each version is a single architecture-independent
-  archive, so `vfox install flutter@3.41.10-ohos-1.0.0-x64` is not supported.
+  checkout, so `vfox install flutter@3.41.10-ohos-1.0.0-x64` is not supported.
 - **`linux-arm64` is limited.** The OpenHarmony toolchain needs a matching
   `dart-sdk-linux-arm64` artifact, which upstream does not publish for some
   releases. On `linux-arm64`, versions such as `3.41.10-ohos-1.0.0` may fail to
-  bootstrap; use an older `3.2x.x-ohos-*` version there.
+  download their Dart SDK; use an older `3.2x.x-ohos-*` version there.
 
-The archives are fetched directly from gitcode.com, so an OpenHarmony install does
-not require `storage.googleapis.com` to be reachable and does not depend on the
-`FLUTTER_STORAGE_BASE_URL` mirror.
+The source is fetched over git's wire protocol from gitcode.com, so an OpenHarmony
+install does not require `storage.googleapis.com` to be reachable and does not
+depend on the `FLUTTER_STORAGE_BASE_URL` mirror.
 
 ## Building OpenHarmony applications
 
