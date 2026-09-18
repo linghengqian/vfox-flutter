@@ -4,7 +4,7 @@ $PSNativeCommandUseErrorActionPreference = $true
 $VfoxVersion = if ($env:VFOX_VERSION) { $env:VFOX_VERSION } else { 'latest' }
 
 $RepoRoot = (Resolve-Path "$PSScriptRoot\..\..\..").Path
-$WorkDir = "$env:TEMP/vfox-flutter-e2e"
+$WorkDir = "$env:TEMP\vfox-flutter-e2e"
 New-Item -ItemType Directory -Force -Path $WorkDir | Out-Null
 $VfoxExe = "$WorkDir\vfox.exe"
 $PluginZip = "$WorkDir\flutter.zip"

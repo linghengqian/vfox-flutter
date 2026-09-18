@@ -33,6 +33,13 @@ version.
   checkout. Keeping the pinned engine versions committed is what stops the
   toolchain from falling back to content-aware hash resolution against git
   history. No git identity is written to your global config.
+- **The vfox home cannot contain spaces on Windows.** The checkout is created by
+  shelling out to `git`, and that call cannot be given a quoted path, so a home such
+  as `C:\Users\John Doe\.vfox` is not supported.
+- **The plugin closes every file it opens before returning the checkout.** vfox
+  installs a local checkout by moving its directories, and Windows refuses to move
+  a directory that still holds an open file, so a leaked handle would abort the
+  install with an access-denied error.
 - **The pinned commit is used, not the branch.** Each release records the commit it
   was cut from, and that is what gets checked out, so a moving branch cannot change
   what an installed version contains.

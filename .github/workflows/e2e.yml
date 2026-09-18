@@ -24,9 +24,17 @@ jobs:
 
   e2e-windows:
     if: github.repository == 'version-fox/vfox-flutter'
-    name: Windows container
+    name: Windows ${{ matrix.vfox }} / ${{ matrix.flavor }}
     runs-on: windows-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        vfox: [latest, main]
+        flavor: [official, ohos]
+    env:
+      VFOX_VERSION: ${{ matrix.vfox }}
+      FLAVOR: ${{ matrix.flavor }}
     steps:
       - uses: actions/checkout@v7
       - run: pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File tests/e2e/windows/e2e.ps1

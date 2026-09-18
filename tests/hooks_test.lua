@@ -1,6 +1,6 @@
 package.path = "./lib/?.lua;" .. package.path
 
-local fixture, requests, mirror
+local fixture, requests, mirror, executed
 local originalGetenv = os.getenv
 os.getenv = function(name)
     if name == "FLUTTER_STORAGE_BASE_URL" then return mirror end
@@ -29,7 +29,7 @@ local function release(version, arch, channel, hash)
 end
 
 local function setup(osType, archType, storage)
-    mirror, requests = storage, {}
+    mirror, requests, executed = storage, {}, {}
     RUNTIME = { osType = osType, archType = archType }
     -- Both architectures share the same Flutter commit. Put x64 first to catch
     -- channel selection that relies on the upstream array's order.
@@ -134,6 +134,89 @@ tests[#tests + 1] = { "missing architecture never falls back to an incompatible 
     equal(PLUGIN:PreInstall({ version = "stable" }), nil)
     equal(PLUGIN:PreInstall({ version = "stable-arm64" }), nil)
     installed("stable-x64", "3.44.0-x64", "x64")
+end }
+
+tests[#tests + 1] = { "the OpenHarmony checkout keeps one path separator per platform", function()
+    local originalExecute = os.execute
+    local originalOpen = io.open
+    local originalGetenv = os.getenv
+    local platforms = {
+        { "linux", "/root" },
+        { "darwin", "/Users/developer" },
+        { "windows", "C:\\Users\\ContainerAdministrator" }
+    }
+    for _, platform in ipairs(platforms) do
+        setup(platform[1], "amd64")
+        fixture = { { tag_name = "3.41.10-ohos-1.0.0", target_commitish = "244a0e8abb" } }
+        os.getenv = function(name)
+            if name == "VFOX_HOME" then return platform[2] end
+            return originalGetenv(name)
+        end
+        local opened = {}
+        os.execute = function(command)
+            table.insert(executed, command)
+            return true
+        end
+        io.open = function(path)
+            table.insert(opened, path)
+            return { close = function() end }
+        end
+        local result = PLUGIN:PreInstall({ version = "3.41.10-ohos-1.0.0" })
+        os.execute = originalExecute
+        io.open = originalOpen
+        os.getenv = originalGetenv
+        assert(result, "no package selected for the OpenHarmony version")
+        equal(#executed, 5)
+        local join = platform[1] == "windows" and "\\" or "/"
+        local parent = platform[2] .. join .. ".vfox" .. join .. "tmp"
+        for _, command in ipairs(executed) do
+            assert(command:find('\"', 1, true) == nil, "a quote leaked into: " .. command)
+        end
+        local mkdirIndex, initIndex
+        for index, command in ipairs(executed) do
+            if command:sub(1, 5) == "mkdir" and command:find(parent, 1, true) ~= nil then
+                mkdirIndex = index
+            end
+            if command:find("git init", 1, true) ~= nil then
+                initIndex = index
+            end
+        end
+        assert(mkdirIndex ~= nil, "the work directory parent is never created")
+        assert(initIndex ~= nil, "git init is never run")
+        assert(mkdirIndex < initIndex, "the work directory parent is created after git init")
+        for _, path in ipairs({ result.url, opened[1] }) do
+            local forward = path:find("/", 1, true)
+            local backslash = path:find("\\", 1, true)
+            assert(forward == nil or backslash == nil, "mixed separators in " .. path)
+            assert(path:find('\"', 1, true) == nil, "a quote leaked into " .. path)
+            if platform[1] == "windows" then
+                assert(backslash ~= nil, path)
+            else
+                assert(forward ~= nil, path)
+            end
+        end
+    end
+end }
+
+tests[#tests + 1] = { "the OpenHarmony checkout closes the engine pin handle", function()
+    local originalGetenv, originalOpen, originalExecute = os.getenv, io.open, os.execute
+    local opened, closed = 0, 0
+    setup("windows", "amd64")
+    fixture = { { tag_name = "3.41.10-ohos-1.0.0", target_commitish = "244a0e8abb" } }
+    os.getenv = function(name)
+        if name == "VFOX_HOME" then return "C:\\Users\\ContainerAdministrator" end
+        return originalGetenv(name)
+    end
+    os.execute = function() return true end
+    io.open = function()
+        opened = opened + 1
+        return { close = function() closed = closed + 1 end }
+    end
+    local result = PLUGIN:PreInstall({ version = "3.41.10-ohos-1.0.0" })
+    os.getenv, io.open, os.execute = originalGetenv, originalOpen, originalExecute
+    assert(result, "no package selected for the OpenHarmony version")
+    equal(opened, 1)
+    equal(closed, 1)
 end }
 
 local failures = 0

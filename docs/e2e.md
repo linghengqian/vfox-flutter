@@ -5,6 +5,13 @@ A containerized end-to-end suite exercises the plugin against real vfox (`latest
 `main`) on Linux and Windows. Each of the four `vfox` x `flavor` combinations runs in
 its own throwaway container, so no state leaks between them.
 
+A first `flutter` run also resolves the tool's own packages from pub. Each Windows
+combination is therefore its own job, so that every runner performs at most one such
+bootstrap: on these runners only the first `pub upgrade` tends to succeed, a later one
+fails with a TLS error against pub.dev and `pub` then spends about forty minutes
+retrying, and no China pub mirror is reachable from them either. A combination that
+fails is retried once in a fresh container.
+
 ## Running on Ubuntu 26.04
 
 Assume that Git and Docker Engine (in either rootful or rootless mode) are already installed.

@@ -20,7 +20,7 @@ end
 
 local function quote(value)
     if RUNTIME.osType == "windows" then
-        return '"' .. value:gsub('"', '""') .. '"'
+        return value
     end
     return "'" .. value:gsub("'", "'\\''") .. "'"
 end
@@ -40,6 +40,18 @@ local function removeDir(path)
     else
         os.execute("rm -rf " .. quote(path))
     end
+end
+
+local function sep()
+    if RUNTIME.osType == "windows" then
+        return "\\"
+    end
+    return "/"
+end
+
+local function localPath(path)
+    local translated = path:gsub("/", sep())
+    return translated
 end
 
 local function releases()
@@ -83,7 +95,7 @@ local function vfoxHome()
     if home == nil or home == "" then
         return nil
     end
-    return home .. "/" .. VFOX_DIR
+    return localPath(home .. "/" .. VFOX_DIR)
 end
 
 local function workDir(version)
@@ -91,7 +103,28 @@ local function workDir(version)
     if home == nil then
         return nil
     end
-    return home .. "/" .. TMP_DIR .. "/" .. version
+    return localPath(home .. "/" .. TMP_DIR .. "/" .. version)
+end
+
+local function parentDir(dir)
+    return dir:match("^(.+)[" .. sep() .. "][^" .. sep() .. "]+$")
+end
+
+local function makeParentDir(dir)
+    local parent = parentDir(dir)
+    if parent == nil then
+        return
+    end
+    if RUNTIME.osType == "windows" then
+        os.execute("mkdir " .. parent)
+    else
+        os.execute("mkdir -p " .. quote(parent))
+    end
+end
+
+local function resetDir(dir)
+    removeDir(dir)
+    makeParentDir(dir)
 end
 
 function M.checkout(version, requestedArch)
@@ -113,7 +146,7 @@ function M.checkout(version, requestedArch)
         error("cannot resolve the vfox home directory")
     end
     local cloneUrl = CLONE_URL:format(REPO)
-    removeDir(dir)
+    resetDir(dir)
     if not run("git init -q " .. quote(dir)) then
         error("failed to initialize git in " .. dir .. " (is git installed?)")
     end
@@ -123,9 +156,11 @@ function M.checkout(version, requestedArch)
     if not git(dir, "checkout -q FETCH_HEAD") then
         error("failed to check out " .. commit .. " in " .. dir)
     end
-    if io.open(dir .. "/" .. ENGINE_PIN, "r") == nil then
+    local pin = io.open(localPath(dir .. "/" .. ENGINE_PIN), "r")
+    if pin == nil then
         error("the checkout at " .. commit .. " has no engine version pin")
     end
+    pin:close()
     return {
         version = version,
         url = dir,
@@ -136,7 +171,7 @@ end
 function M.clean(version)
     local dir = workDir(version)
     if dir ~= nil then
-        removeDir(dir)
+        resetDir(dir)
     end
 end
 
